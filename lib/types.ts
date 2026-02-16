@@ -47,12 +47,17 @@ export interface MoveQuality {
   evalDrop: number;
   classification: MoveClassification;
   bestMove?: string;
+  moveFrom?: string;
+  moveTo?: string;
+  bestMoveFrom?: string;
+  bestMoveTo?: string;
 }
 
 /** Arrow overlay for move hints */
 export interface ArrowHint {
   from: Square;
   to: Square;
+  color?: string;
 }
 
 /** Last move highlight */

@@ -12,6 +12,7 @@ interface ChessBoardProps {
   onSquareClick: (square: Square) => void;
   flipped?: boolean;
   showArrow?: ArrowHint | null;
+  arrows?: ArrowHint[];
 }
 
 /** Get background color for a square based on selection/last-move state */
@@ -44,18 +45,19 @@ function squareToCoords(sq: Square, flipped: boolean): { x: number; y: number } 
 }
 
 /** SVG arrow overlay for move hints */
-function MoveArrow({ from, to, flipped }: { from: Square; to: Square; flipped: boolean }) {
-  const color = 'rgba(0, 180, 0, 0.7)';
+function MoveArrow({ from, to, flipped, color = 'rgba(0, 180, 0, 0.7)', id = 'default' }: { from: Square; to: Square; flipped: boolean; color?: string; id?: string }) {
   const f = squareToCoords(from, flipped);
   const t = squareToCoords(to, flipped);
   const dx = t.x - f.x;
   const dy = t.y - f.y;
   const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return null;
   const ux = dx / len;
   const uy = dy / len;
   const headLen = 14;
   const tx = t.x - ux * headLen;
   const ty = t.y - uy * headLen;
+  const markerId = `arrowhead-${id}`;
 
   return (
     <svg
@@ -65,14 +67,14 @@ function MoveArrow({ from, to, flipped }: { from: Square; to: Square; flipped: b
       style={{ zIndex: 10 }}
     >
       <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+        <marker id={markerId} markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
           <polygon points="0 0, 10 4, 0 8" fill={color} />
         </marker>
       </defs>
       <line
         x1={f.x} y1={f.y} x2={tx} y2={ty}
         stroke={color} strokeWidth="8" strokeLinecap="round"
-        markerEnd="url(#arrowhead)" opacity="0.8"
+        markerEnd={`url(#${markerId})`} opacity="0.8"
       />
     </svg>
   );
@@ -90,6 +92,7 @@ export const ChessBoard = React.memo(function ChessBoard({
   onSquareClick,
   flipped = false,
   showArrow = null,
+  arrows = [],
 }: ChessBoardProps) {
   const board = game.board();
   const displayRanks = flipped ? [...RANKS].reverse() : [...RANKS];
@@ -162,7 +165,10 @@ export const ChessBoard = React.memo(function ChessBoard({
             </div>
           ))}
 
-          {showArrow && <MoveArrow from={showArrow.from} to={showArrow.to} flipped={flipped} />}
+          {showArrow && <MoveArrow from={showArrow.from} to={showArrow.to} flipped={flipped} id="hint" />}
+          {arrows.map((arrow, i) => (
+            <MoveArrow key={i} from={arrow.from} to={arrow.to} flipped={flipped} color={arrow.color} id={`arr-${i}`} />
+          ))}
         </div>
 
         {/* Rank labels - right */}

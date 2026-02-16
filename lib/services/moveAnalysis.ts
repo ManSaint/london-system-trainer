@@ -45,16 +45,22 @@ export async function analyzeMoveQuality(
     tempGame.move(moveSan);
     const fenAfter = tempGame.fen();
 
-    // Convert best move from UCI to SAN for display
+    // Convert best move from UCI to SAN for display, and store squares
     let bestMove = bestMoveUci;
+    const bestMoveFrom = bestMoveUci.slice(0, 2);
+    const bestMoveTo = bestMoveUci.slice(2, 4);
     try {
       const sanGame = new Chess(fen);
-      const from = bestMoveUci.slice(0, 2);
-      const to = bestMoveUci.slice(2, 4);
       const promotion = bestMoveUci.length > 4 ? bestMoveUci[4] : undefined;
-      const m = sanGame.move({ from, to, promotion });
+      const m = sanGame.move({ from: bestMoveFrom, to: bestMoveTo, promotion });
       if (m) bestMove = m.san;
     } catch { /* keep UCI if conversion fails */ }
+
+    // Get from/to squares for the played move
+    const moveGame = new Chess(fen);
+    const playedMove = moveGame.move(moveSan);
+    const moveFrom = playedMove?.from;
+    const moveTo = playedMove?.to;
 
     // Analyze position after the move
     const analysisAfter = await analyzePosition(fenAfter, 12);
@@ -73,6 +79,10 @@ export async function analyzeMoveQuality(
       evalDrop: Math.max(0, evalDrop),
       classification,
       bestMove,
+      moveFrom,
+      moveTo,
+      bestMoveFrom,
+      bestMoveTo,
     };
   } catch (error) {
     console.warn('Move analysis failed:', error);
